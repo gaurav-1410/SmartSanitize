@@ -1,3 +1,3 @@
 # Validation rules
 def navnish():
-    pass
+    print("hello")
