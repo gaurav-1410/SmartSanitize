@@ -31,7 +31,7 @@ if page == "Upload File":
             st.error("❌ Invalid file format or corrupted file. Please upload a valid CSV, Excel, or JSON.")
 
 # Data Analysis Page (Placeholder)
-elif page == "Data Analysis":
+elif page == "Data Summary":
     st.subheader("📊 Data Quality Analysis")
     if st.session_state.uploaded_df is not None:
         st.write("This section will include missing value detection, duplicates, and class imbalance checks.")
@@ -47,7 +47,7 @@ elif page == "Preprocessing":
         st.warning("⚠ No file uploaded. Please upload a file first.")
 
 # Visualization Page (Placeholder)
-elif page == "Visualization":
+elif page == "EDA":
     st.subheader("📈 Data Visualization")
     if st.session_state.uploaded_df is not None:
         st.write("Charts and graphs will be displayed here.")
