@@ -1,0 +1,1 @@
+# Defines data file structure
