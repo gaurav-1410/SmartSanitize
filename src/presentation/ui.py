@@ -18,7 +18,7 @@ class UIHandler:
 
     def display_data_summary(self):
         """Displays data analysis UI"""
-        
+        st.title("📊 Data Quality Analysis")
         if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
             df = st.session_state.uploaded_df
             summary=SummaryPage()

@@ -11,7 +11,7 @@ class SummaryPage:
     """
 
     def display(self):
-        st.title("📊 Data Quality Analysis")
+        
 
         if st.session_state.uploaded_df is None:
             st.warning("⚠ No file uploaded. Please upload a dataset first.")
