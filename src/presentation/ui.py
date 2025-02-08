@@ -4,6 +4,7 @@ import seaborn as sns
 import pandas as pd
 from infrastructure.file_loader import FileHandler
 from services.preprocessing import DataPreprocessing
+from presentation.summary_page import SummaryPage
 
 class UIHandler:
     def __init__(self):
@@ -17,15 +18,12 @@ class UIHandler:
 
     def display_data_summary(self):
         """Displays data analysis UI"""
-        st.subheader("📊 Data Quality Analysis")
+        
         if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
             df = st.session_state.uploaded_df
-
-            st.write("### Null Value Summary")
-            st.write(df.isnull().sum())
-
-            # Visualization
-            self.plot_null_values(df)
+            summary=SummaryPage()
+            summary.display()
+            
         else:
             st.warning("⚠ No file uploaded. Please upload a file first.")
 

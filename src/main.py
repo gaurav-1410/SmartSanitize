@@ -2,8 +2,6 @@ import streamlit as st
 from presentation.ui import UIHandler
 from presentation.visualization_page import VisualizationPage
 
-# Streamlit App Title
-st.title("📊 SmartSanitize - Data Cleaning App")
 
 # Sidebar Navigation
 st.sidebar.header("Navigation")
@@ -15,6 +13,7 @@ visualization = VisualizationPage()
 
 # File Upload Page
 if page == "Upload File":
+    st.title("📊 SmartSanitize - Data Cleaning App")
     ui.display_upload_page()
 
 # Data Analysis Page

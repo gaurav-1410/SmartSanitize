@@ -6,5 +6,6 @@ matplotlib
 seaborn
 pytest
 reportlab
+statsmodels
 plotly
 kaleido
