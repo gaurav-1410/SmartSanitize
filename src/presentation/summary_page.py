@@ -1,5 +1,5 @@
 import streamlit as st
-
+from services.quality_analysis import DataSummary
 
 class SummaryPage:
     """
