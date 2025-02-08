@@ -45,13 +45,13 @@ class UIHandler:
         else:
             st.warning("⚠ No file uploaded. Please upload a file first.")
 
-    def display_visualization(self):
-        """Displays visualization UI"""
-        st.subheader("📈 Data Visualization")
-        if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
-            st.write("Charts and graphs will be displayed here.")
-        else:
-            st.warning("⚠ No file uploaded. Please upload a file first.")
+    # def display_visualization(self):
+    #     """Displays visualization UI"""
+    #     st.subheader("📈 Data Visualization")
+    #     if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
+    #         st.write("Charts and graphs will be displayed here.")
+    #     else:
+    #         st.warning("⚠ No file uploaded. Please upload a file first.")
 
     def plot_null_values(self, df):
         """Visualizes missing values"""
