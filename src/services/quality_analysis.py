@@ -80,7 +80,7 @@ class CategoricalValueChecker:
                 continue
             
             inconsistent_values[col] = list(cleaned_values)
-        return inconsistent_values
+        return type(inconsistent_values)
 
 
 class MulticollinearityChecker:
@@ -177,13 +177,6 @@ class DataSummary:
         missing_report = MissingValueAnalyzer.analyze_missing_values(self.df)
         duplicate_report = DuplicateAnalyzer.analyze_duplicates(self.df)
 
-        class_imbalance_report = None
-        if self.target_column:
-            try:
-                class_imbalance_report = ClassImbalanceAnalyzer.analyze_class_imbalance(self.df, self.target_column)
-            except ValueError as e:
-                class_imbalance_report = str(e)
-
         anonymized_data = DataAnonymizer.anonymize_data(self.df)
         numerical_cols, categorical_cols = DataTypeHandler.separate_columns(self.df)
 
@@ -195,7 +188,6 @@ class DataSummary:
         return {
             "Missing Values Report": missing_report,
             "Duplicate Report": duplicate_report,
-            "Class Imbalance Report": class_imbalance_report,
             "Anonymized Data Sample": anonymized_data.head(),
             "Numerical Columns": numerical_cols,
             "Categorical Columns": categorical_cols,
@@ -206,34 +198,6 @@ class DataSummary:
         }
 
 
-if __name__ == "__main__":
-    # Load sample dataset
-    file_path = "C:/Users/Alka/Downloads/ai4i+2020+predictive+maintenance+dataset/ai4i2020.csv"
-
-  # Change to your file path
-    df = pd.read_csv(file_path)
-    print(df.info())
-
-    # Specify target column for class imbalance analysis
-    target_column = None  # Change as needed
-
-    # Generate report
-    data_summary = DataSummary(df, target_column)
-    report = data_summary.generate_report()
-
-    # Display reports
-    print("\nMissing Values Report:\n", report["Missing Values Report"])
-    print("\nDuplicate Report:\n", report["Duplicate Report"])
     
-    if isinstance(report["Class Imbalance Report"], pd.DataFrame):
-        print("\nClass Imbalance Report:\n", report["Class Imbalance Report"])
-    else:
-        print("\nClass Imbalance Report: Error -", report["Class Imbalance Report"])
 
-    print("\nAnonymized Data Sample:\n", report["Anonymized Data Sample"])
-    print("\nNumerical Columns:\n", report["Numerical Columns"])
-    print("\nCategorical Columns:\n", report["Categorical Columns"])
-    print("\nCategorical Value Issues:\n", report["Categorical Value Issues"])
-    print("\nMulticollinearity (High VIF Features):\n", report["Multicollinearity (High VIF Features)"])
-    print("\nHighly Correlated Features:\n", report["Highly Correlated Features"])
-    print("\nExtreme Value Report:\n", report["Extreme Value Report"])
+

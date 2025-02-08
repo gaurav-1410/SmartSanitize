@@ -1,6 +1,5 @@
 import pytest
 import pandas as pd
-from src.services.quality_analysis import detect_missing_values, detect_duplicates
 
 import pytest
 import pandas as pd
@@ -22,9 +21,10 @@ def sample_data():
         "Age": [25, 30, None, 25, 40],
         "Salary": [50000, None, 70000, 50000, 90000],
         "Gender": ["F", "M", "M", "F", "F"],
-        "Target": ["Yes", "No", "Yes", "No", "No"]
+        "Target": ["Yes", "No", "Yes", "Yes", "No"],  # Ensure full duplicate row
     }
     return pd.DataFrame(data)
+
 
 
 # ✅ Test for missing values

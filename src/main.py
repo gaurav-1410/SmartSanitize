@@ -1,18 +1,30 @@
 import streamlit as st
-from presentation.navigation import Navigation
+from presentation.ui import UIHandler
 
 
-def main():
-    """
-    Entry point for the SmartSanitize App.
-    """
-    st.title("📊 Sanitize The Data")
+# Sidebar Navigation
+st.sidebar.header("Navigation")
+page = st.sidebar.radio("Go to:", ["Upload File", "Data Summary", "Preprocessing", "Visualization"])
 
-    # Initialize Navigation
-    nav = Navigation()
-    nav.display_page()
+# Create an instance of UIHandler
+ui = UIHandler()
 
+# File Upload Page
+if page == "Upload File":
+    st.title("📊 SmartSanitize - Data Cleaning App")
+    ui.display_upload_page()
 
-if __name__ == "__main__":
-    # print("SmartSanitize App Running...")
-    main()
+# Data Analysis Page
+elif page == "Data Summary":
+    ui.display_data_summary()
+
+# Preprocessing Page
+elif page == "Preprocessing":
+    ui.display_preprocessing()
+
+# Visualization Page
+elif page == "Visualization":
+    ui.display_visualization()
+
+if __name__ == '__main__':
+    print('SmartSanitize App Running...')
