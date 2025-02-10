@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import re
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from collections import Counter
 
 class MissingValueAnalyzer:
     """Handles missing value analysis."""
@@ -10,7 +11,21 @@ class MissingValueAnalyzer:
     def analyze_missing_values(df):
         missing_values = df.isnull().sum()
         missing_percent = (missing_values / len(df)) * 100
-        return pd.DataFrame({'Missing Values': missing_values, 'Percentage': missing_percent})
+
+        # Detect missing values in categorical columns (empty strings or special characters)
+        categorical_columns = df.select_dtypes(exclude=['number']).columns
+        for col in categorical_columns:
+            empty_string_count = (df[col] == "").sum()
+            if empty_string_count > 0:
+                missing_values[col] += empty_string_count
+                missing_percent[col] = (missing_values[col] / len(df)) * 100
+
+        # Filter only columns with missing values
+        missing_data = pd.DataFrame({'Missing Values': missing_values, 'Percentage': missing_percent})
+        missing_data = missing_data[missing_data['Missing Values'] > 0]
+
+        return missing_data
+
 
 
 class DuplicateAnalyzer:
@@ -20,6 +35,14 @@ class DuplicateAnalyzer:
     def analyze_duplicates(df):
         duplicate_count = df.duplicated().sum()
         return {"Total Duplicates": duplicate_count}
+
+    @staticmethod
+    def analyze_near_duplicates(df, text_columns):
+        near_duplicates = {}
+        for col in text_columns:
+            duplicates = df[col].duplicated(keep=False)
+            near_duplicates[col] = df[duplicates].shape[0]
+        return near_duplicates
 
 
 class ClassImbalanceAnalyzer:
@@ -80,7 +103,14 @@ class CategoricalValueChecker:
                 continue
             
             inconsistent_values[col] = list(cleaned_values)
-        return type(inconsistent_values)
+
+        # Detect rare categories (<1% of total data)
+        rare_categories = {}
+        for col in df.select_dtypes(exclude=['number']).columns:
+            value_counts = df[col].value_counts(normalize=True)
+            rare_categories[col] = value_counts[value_counts < 0.01].index.tolist()
+        
+        return inconsistent_values, rare_categories
 
 
 class MulticollinearityChecker:
@@ -116,7 +146,6 @@ class MulticollinearityChecker:
         return vif_data[vif_data["VIF"] > 5]  # Features with VIF > 5 indicate multicollinearity
 
 
-
 class CorrelationHandler:
     """Handles feature correlation and removes highly correlated features."""
 
@@ -145,7 +174,6 @@ class CorrelationHandler:
         return to_drop
 
 
-
 class OutlierDetector:
     """Detects extreme values in numerical columns using IQR method."""
 
@@ -166,6 +194,114 @@ class OutlierDetector:
         return outlier_report
 
 
+class TextColumnHandler:
+    """Handles NLP-related checks for text columns."""
+
+    @staticmethod
+    def detect_long_tail_text(df, text_columns):
+        text_lengths = {}
+        for col in text_columns:
+            text_lengths[col] = df[col].str.len().describe()
+
+        return text_lengths
+
+    @staticmethod
+    def detect_case_variations(df):
+        case_issues = {}
+        for col in df.select_dtypes(exclude=['number']).columns:
+            if df[col].apply(lambda x: isinstance(x, str)).any():
+                case_variation = df[col].str.lower().nunique() < df[col].nunique()
+                if case_variation:
+                    case_issues[col] = True
+                else:
+                    case_issues[col] = False
+        return case_issues
+
+
+import numpy as np
+import pandas as pd
+import re
+
+class DataQualityScorer:
+    """Computes a comprehensive Data Quality Score based on multiple criteria."""
+    
+    def __init__(self, df):
+        self.df = df
+        self.total_rows = len(df)
+        self.total_values = df.size
+    
+    def completeness_score(self):
+        missing_values = self.df.isnull().sum().sum() + (self.df == "").sum().sum()
+        return max(0, 100 - (missing_values / self.total_values) * 100)
+    
+    def uniqueness_score(self):
+        key_columns = [col for col in self.df.columns if self.df[col].nunique() > 1]  # Ignore columns with single unique value
+        duplicate_count = sum(self.df.duplicated(subset=key_columns)) if key_columns else 0
+        return max(0, 100 - (duplicate_count / self.total_rows) * 100)
+    
+    def validity_score(self):
+        categorical_cols = self.df.select_dtypes(exclude=[np.number]).columns
+        invalid_count = 0
+        pattern = re.compile(r'[^a-zA-Z0-9 ]')  # Checks for special characters
+        
+        for col in categorical_cols:
+            invalid_count += self.df[col].astype(str).apply(lambda x: bool(pattern.search(x))).sum()
+        
+        return max(0, 100 - (invalid_count / self.total_values) * 100)
+    
+    def accuracy_score(self):
+        numerical_cols = self.df.select_dtypes(include=[np.number]).columns
+        outlier_count = 0
+        
+        for col in numerical_cols:
+            Q1, Q3 = self.df[col].quantile([0.25, 0.75])
+            IQR = Q3 - Q1
+            lower_bound, upper_bound = Q1 - 3 * IQR, Q3 + 3 * IQR  # Adjusted for better outlier detection
+            outlier_count += self.df[(self.df[col] < lower_bound) | (self.df[col] > upper_bound)][col].count()
+        
+        return max(0, 100 - (outlier_count / self.total_rows) * 100)
+    
+    def consistency_score(self):
+        inconsistent_count = 0
+        
+        for col in self.df.columns:
+            if self.df[col].dtype == 'object':
+                stripped_values = self.df[col].astype(str).apply(lambda x: x.strip())
+                inconsistent_count += (stripped_values.nunique() - self.df[col].nunique())
+        
+        return max(0, 100 - (inconsistent_count / self.total_rows) * 100)
+    
+    def timeliness_score(self):
+        if 'date' in self.df.columns:
+            self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
+            latest_date = self.df['date'].max()
+            old_records = self.df[self.df['date'] < (latest_date - pd.Timedelta(days=365))]
+            return max(0, 100 - (len(old_records) / self.total_rows) * 100)
+        return None  # Exclude timeliness if no date column
+    
+    def calculate_overall_score(self):
+        scores = {
+            'Completeness': self.completeness_score(),
+            'Uniqueness': self.uniqueness_score(),
+            'Validity': self.validity_score(),
+            'Accuracy': self.accuracy_score(),
+            'Consistency': self.consistency_score(),
+            'Timeliness': self.timeliness_score()
+        }
+        
+        if scores['Timeliness'] is None:
+            scores.pop('Timeliness')
+            weights = {'Completeness': 0.33, 'Uniqueness': 0.22, 'Validity': 0.17, 'Accuracy': 0.17, 'Consistency': 0.11}
+        else:
+            weights = {'Completeness': 0.3, 'Uniqueness': 0.2, 'Validity': 0.15, 'Accuracy': 0.15, 'Consistency': 0.1, 'Timeliness': 0.1}
+        
+        overall_score = sum(scores[metric] * weights[metric] for metric in scores)
+        return round(overall_score, 2), scores
+
+
+
+
+
 class DataSummary:
     """High-level class that integrates all analysis steps."""
 
@@ -177,27 +313,40 @@ class DataSummary:
         missing_report = MissingValueAnalyzer.analyze_missing_values(self.df)
         duplicate_report = DuplicateAnalyzer.analyze_duplicates(self.df)
 
+        # Analyzing near-duplicates in text columns
+        text_columns = [col for col in self.df.select_dtypes(exclude=['number']).columns if self.df[col].dtype == 'object']
+        near_duplicates = DuplicateAnalyzer.analyze_near_duplicates(self.df, text_columns)
+        
         anonymized_data = DataAnonymizer.anonymize_data(self.df)
         numerical_cols, categorical_cols = DataTypeHandler.separate_columns(self.df)
 
-        categorical_value_issues = CategoricalValueChecker.check_categorical_values(self.df)
+        categorical_value_issues, rare_categories = CategoricalValueChecker.check_categorical_values(self.df)
         vif_report = MulticollinearityChecker.calculate_vif(self.df)
         highly_correlated_features = CorrelationHandler.remove_highly_correlated_features(self.df)
         extreme_value_report = OutlierDetector.detect_extreme_values(self.df)
+        long_tail_text = TextColumnHandler.detect_long_tail_text(self.df, text_columns)
+        case_variations = TextColumnHandler.detect_case_variations(self.df)
+        dqs = DataQualityScorer(self.df)
+        overall_score, detailed_scores = dqs.calculate_overall_score()
+
 
         return {
             "Missing Values Report": missing_report,
             "Duplicate Report": duplicate_report,
+            "Near Duplicates in Text Columns": near_duplicates,
             "Anonymized Data Sample": anonymized_data.head(),
             "Numerical Columns": numerical_cols,
             "Categorical Columns": categorical_cols,
             "Categorical Value Issues": categorical_value_issues,
+            "Rare Categories (<1%)": rare_categories,
             "Multicollinearity (High VIF Features)": vif_report,
             "Highly Correlated Features": highly_correlated_features,
-            "Extreme Value Report": extreme_value_report
+            "Extreme Value Report": extreme_value_report,
+            "Long-Tail Text Distribution": long_tail_text,
+            "Case Variations in Text Columns": case_variations,
+            "Data Quality Score": [overall_score,detailed_scores]
         }
 
 
-    
 
 

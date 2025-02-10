@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+
 class DataPreprocessing:
     def recommend_null_filling(self, df):
         """

@@ -13,7 +13,7 @@ class UIHandler:
 
     def display_upload_page(self):
         """Handles file upload UI and processing"""
-        st.subheader("📤 Upload Your File")
+        
         self.file_handler.handle_file_upload()  # Calls file upload handler
 
     def display_data_summary(self):

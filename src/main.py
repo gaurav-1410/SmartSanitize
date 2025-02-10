@@ -2,10 +2,17 @@ import streamlit as st
 from presentation.ui import UIHandler
 from presentation.visualization_page import VisualizationPage
 
+# Configure Streamlit page layout for full-width display
+st.set_page_config(
+    layout="wide",
+    initial_sidebar_state="collapsed",
+    page_title="SmartSanitize",
+    page_icon="📊"
+)
 
 # Sidebar Navigation
 st.sidebar.header("Navigation")
-page = st.sidebar.radio("Go to:", ["Upload File", "Data Summary", "Preprocessing", "Visualization"])
+page = st.sidebar.radio("", ["Upload File", "Data Summary", "Preprocessing", "Visualization"])
 
 # Create an instance of UIHandler
 ui = UIHandler()
@@ -13,7 +20,7 @@ visualization = VisualizationPage()
 
 # File Upload Page
 if page == "Upload File":
-    st.title("📊 SmartSanitize - Data Cleaning App")
+    st.title("📊 SmartSanitize")
     ui.display_upload_page()
 
 # Data Analysis Page
@@ -35,3 +42,5 @@ elif page == "Visualization":
 
 if __name__ == '__main__':
     print('SmartSanitize App Running...')
+
+
