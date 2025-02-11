@@ -21,40 +21,43 @@ class UIHandler:
         
         if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
             df = st.session_state.uploaded_df
-            summary=SummaryPage()
+            summary = SummaryPage()
             summary.display()
-            
         else:
             st.warning("⚠ No file uploaded. Please upload a file first.")
 
     def display_preprocessing(self):
-        """Displays preprocessing UI"""
+        """Displays preprocessing UI with column management and missing value handling"""
         st.subheader("⚙ Data Preprocessing")
+
         if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
             df = st.session_state.uploaded_df
 
+            # Column Management: Rename or Delete Columns
+            st.subheader("🛠 Column Management")
+            df = self.data_preprocessor.modify_columns(df)
+            st.session_state.uploaded_df = df  # Update session state after modification
+
+            # Null Value Handling
+            # st.subheader("🔍 Null Value Handling")
             selected_methods = self.data_preprocessor.display_null_filling_options(df)
 
-            if st.button("Apply Changes"):
+            if selected_methods and st.button("Apply Changes"):
                 df = self.data_preprocessor.fill_missing_values(df, selected_methods)
-                st.session_state.uploaded_df = df
-                st.success("✅ Missing values have been filled successfully!")
-                st.dataframe(df.head(10))
+                st.session_state.uploaded_df = df  # Update session state
+                st.success("✅ Missing values have been handled successfully!")
+
+            # Show updated dataframe preview
+            st.subheader("📌 Updated Dataset Preview")
+            st.dataframe(df.head(10))
+
         else:
             st.warning("⚠ No file uploaded. Please upload a file first.")
-
-    # def display_visualization(self):
-    #     """Displays visualization UI"""
-    #     st.subheader("📈 Data Visualization")
-    #     if "uploaded_df" in st.session_state and st.session_state.uploaded_df is not None:
-    #         st.write("Charts and graphs will be displayed here.")
-    #     else:
-    #         st.warning("⚠ No file uploaded. Please upload a file first.")
 
     def plot_null_values(self, df):
         """Visualizes missing values"""
         null_counts = df.isnull().sum()
-        null_counts = null_counts[null_counts > 0]
+        null_counts = null_counts[null_counts > 0]  # Show only columns with missing values
 
         if not null_counts.empty:
             fig, ax = plt.subplots(figsize=(10, 6))
