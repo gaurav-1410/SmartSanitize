@@ -30,7 +30,7 @@ class SummaryPage:
             # Plot missing values if any exist
             if missing_df["Missing Values"].sum() > 0:
                 fig, ax = plt.subplots(figsize=(8, 4))
-                sns.barplot(x=missing_df.index, y=missing_df["Missing Values"], ax=ax, palette="coolwarm")
+                sns.barplot(x=missing_df.index, y=missing_df["Missing Values"], ax=ax, palette="coolwarm", hue=missing_df.index, legend=False)
                 plt.xticks(rotation=45)
                 plt.ylabel("Count")
                 st.pyplot(fig)
@@ -111,12 +111,12 @@ class SummaryPage:
             st.write("No highly correlated features detected!")
         # Additionally, display the correlation heatmap for numerical columns
         numerical_df = st.session_state.uploaded_df.select_dtypes(include=['number'])
-        if not numerical_df.empty:
+        if numerical_df.shape[1] > 1:
             fig, ax = plt.subplots(figsize=(8, 6))
             sns.heatmap(numerical_df.corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
             st.pyplot(fig)
         else:
-            st.info("No numeric columns available for correlation analysis.")
+            st.info("Not enough numeric columns for correlation analysis (need at least 2).")
 
         # --- 8️⃣ Outlier Detection ---
         st.subheader("🚨 Extreme Value Report (Outliers)")
@@ -126,12 +126,17 @@ class SummaryPage:
             # Plot boxplots for outlier detection
             numerical_cols = st.session_state.uploaded_df.select_dtypes(include=['number']).columns
             for col in numerical_cols:
-                fig, ax = plt.subplots(figsize=(6, 4))
-                sns.boxplot(y=st.session_state.uploaded_df[col], ax=ax)
-                plt.title(f"Outlier Detection - {col}")
-                st.pyplot(fig)
+                valid_data = st.session_state.uploaded_df[col].dropna()
+                if valid_data.shape[0] > 0:  # Ensure non-empty data
+                    fig, ax = plt.subplots(figsize=(6, 4))
+                    sns.boxplot(y=valid_data, ax=ax)
+                    plt.title(f"Outlier Detection - {col}")
+                    st.pyplot(fig)
+                else:
+                    st.warning(f"Skipping {col}: No valid numeric data available for boxplot.")
         else:
             st.write("No extreme values detected!")
+
 
         st.success("✅ Data Quality Analysis Completed!")
 
